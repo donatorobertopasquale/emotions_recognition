@@ -1,7 +1,0 @@
-transformers
-pillow
-torch 
-torchvision
-fastapi
-python-multipart
-'uvicorn[standard]'

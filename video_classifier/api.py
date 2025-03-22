@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
-from model import EmotionRecognizer, EmotionResponse
+from emotion_recognizer import EmotionRecognizer, EmotionResponse
+
+
 from PIL import Image
 import io
 
@@ -10,8 +12,7 @@ emotion_recognizer = EmotionRecognizer()
 async def predict_emotion(file: UploadFile = File(...)):
     """Endpoint to predict emotion from uploaded image"""
     contents = await file.read()
-    image = Image.open(io.BytesIO(contents))
-    result = emotion_recognizer.predict_from_image(image, file.filename)
+    result = emotion_recognizer.process_video(contents)
     return result
 
 if __name__ == "__main__":

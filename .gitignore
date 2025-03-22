@@ -27,3 +27,11 @@ huggingface/*
 images/*
 
 **__pycache__**
+
+original_repo/*
+*.venv
+
+video_classifier/emotion_recognizer/models/*
+**DS_Store**
+**.vscode**
+**.mp4**
