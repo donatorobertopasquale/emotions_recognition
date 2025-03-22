@@ -1,9 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "emotion_recognizer"))
 from emotion_recognizer import EmotionRecognizer, EmotionResponse
-
-
-from PIL import Image
-import io
 
 app = FastAPI()
 emotion_recognizer = EmotionRecognizer()
