@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
 import os
-from emotion_recognizer.ResEmoteNet import ResEmoteNet
+from ResEmoteNet import ResEmoteNet
 from pydantic import BaseModel
 from typing import Dict
 
@@ -269,8 +269,9 @@ if __name__ == "__main__":
             if not ret:
                 break
             
-            processed_frame, _ = recognizer.process_frame(frame, counter)
+            processed_frame, emotions = recognizer.process_frame(frame, counter)
             cv2.imshow('Emotion Recognition', processed_frame)
+            print([emotion.get("emotion") for emotion in emotions if emotion.get("emotion")!='Processing...'])
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
