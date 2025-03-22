@@ -100,6 +100,6 @@ The system uses:
 
 The pre-trained emotion recognition model is based on ResEmoteNet architecture and trained on multiple emotion datasets. The model is downloaded from the Hugging Face Hub when running the `download_models.py` script.
 
-The pre-trained model is downloaded from https://huggingface.co/neilchouGTX/ResEmoteNet_Four_datasets_BatchSize32/tree/main
+The pre-trained model is downloaded from https://huggingface.co/GabrieleConte/ResEmoteNet
 The original codebase to train and use the model is https://github.com/ArnabKumarRoy02/ResEmoteNet, which ranks #1 on FER tasks on https://paperswithcode.com/paper/resemotenet-bridging-accuracy-and-loss#code
 
