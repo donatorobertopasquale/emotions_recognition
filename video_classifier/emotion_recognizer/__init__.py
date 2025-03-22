@@ -1,0 +1,1 @@
+from emotion_recognizer.emotion_predictor import EmotionRecognizer, EmotionResponse
