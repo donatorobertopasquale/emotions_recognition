@@ -1,7 +1,6 @@
 import os
 import logging
-import torch
-from huggingface_hub import hf_hub_download, snapshot_download
+from huggingface_hub import snapshot_download
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -10,7 +9,7 @@ logger = logging.getLogger(__name__)
 def download_models():
     """Download and cache the video emotion recognition model"""
     
-    model_id = "neilchouGTX/ResEmoteNet_Four_datasets_BatchSize32"
+    model_id = "GabrieleConte/ResEmoteNet"
     cache_dir = os.path.join(os.path.dirname(__file__), 'emotion_recognizer', 'models')
     
     # Create cache directory if it doesn't exist
