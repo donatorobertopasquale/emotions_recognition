@@ -35,3 +35,7 @@ video_classifier/emotion_recognizer/models/*
 **DS_Store**
 **.vscode**
 **.mp4**
+**.onnx
+**.pth
+**.pt
+**.rknn
