@@ -1,0 +1,10 @@
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.git
+.gitignore
+.env
+*.log
+old
+emotion_recognizer/npu
+**/__pycache__

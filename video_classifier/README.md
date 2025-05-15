@@ -103,3 +103,8 @@ The pre-trained emotion recognition model is based on ResEmoteNet architecture a
 The pre-trained model is downloaded from https://huggingface.co/GabrieleConte/ResEmoteNet
 The original codebase to train and use the model is https://github.com/ArnabKumarRoy02/ResEmoteNet, which ranks #1 on FER tasks on https://paperswithcode.com/paper/resemotenet-bridging-accuracy-and-loss#code
 
+## Docker 🐳
+
+cd video_classifier
+docker build . -t video_classifier
+docker run -p 8000:8000 video classifier
