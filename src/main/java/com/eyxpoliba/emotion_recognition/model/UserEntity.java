@@ -12,6 +12,7 @@ import java.util.List;
 @Table(name = "users")
 public class UserEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String nickname;
     private String email;

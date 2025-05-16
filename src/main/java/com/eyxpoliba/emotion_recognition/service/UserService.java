@@ -2,17 +2,25 @@ package com.eyxpoliba.emotion_recognition.service;
 
 import com.eyxpoliba.emotion_recognition.model.UserEntity;
 import com.eyxpoliba.emotion_recognition.repository.UserRepository;
-import lombok.AllArgsConstructor;
+import com.eyxpoliba.emotion_recognition.responses.LoginResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.util.List;
+
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final AzureStorageService azureStorageService;
 
-    public ResponseEntity<Object> login(UserEntity user) {
-        userRepository.save(user);
-        return ResponseEntity.ok("Login successful");
+    public ResponseEntity<LoginResponse> login(UserEntity user) {
+        UserEntity newUser = userRepository.save(user);
+
+        List<String> images = azureStorageService.getImagesForUserSession();
+        return ResponseEntity.created(URI.create("/api/login"))
+                .body(new LoginResponse(newUser.getId(), images));
     }
 }
