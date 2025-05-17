@@ -1,10 +1,19 @@
 import os
-import logging
-from huggingface_hub import snapshot_download
+import logging, requests
+from huggingface_hub import snapshot_download, configure_http_backend
+
+def backend_factory() -> requests.Session:
+    session = requests.Session()
+    session.verify = False
+    return session
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+configure_http_backend(backend_factory=backend_factory)
+
+
 
 def download_models():
     """Download and cache the video emotion recognition model"""
