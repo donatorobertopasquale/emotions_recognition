@@ -141,11 +141,32 @@ The video classifier service provides emotion recognition capabilities through a
 
 ## Backend Service
 
-The Spring Boot backend handles:
-- User management
-- Reaction data processing
-- Azure Storage integration
-- Database operations
+The Spring Boot backend is now properly containerized with:
+- Multi-stage Docker build for optimized image size
+- Maven-based build process inside the container
+- Non-root user for security
+- No volume mounting issues (self-contained build)
+
+### Key Features
+- User management and authentication
+- Reaction data processing and storage
+- Azure Storage integration for file handling
+- RESTful API endpoints
+- Database operations with JPA/Hibernate
+
+### Backend Development
+
+To make changes to the backend:
+
+1. Edit files in the `backend/` directory
+2. Rebuild the backend service:
+   ```powershell
+   docker-compose build backend
+   ```
+3. Restart the service:
+   ```powershell
+   docker-compose --profile core up -d
+   ```
 
 ## Database
 
@@ -179,9 +200,13 @@ docker-compose exec db psql -U $POSTGRESDB_USER -d $POSTGRESDB_DATABASE
 
 ```
 ├── docker-compose.yml          # Multi-service orchestration
-├── Dockerfile                  # Backend service container
-├── pom.xml                     # Maven configuration
-├── src/                        # Spring Boot source code
+├── backend/                    # Java Spring Boot service
+│   ├── Dockerfile             # Backend service container
+│   ├── pom.xml                # Maven configuration
+│   ├── mvnw                   # Maven wrapper
+│   ├── mvnw.cmd               # Maven wrapper (Windows)
+│   ├── .mvn/                  # Maven wrapper configuration
+│   └── src/                   # Spring Boot source code
 ├── video_classifier/           # Python ML service
 │   ├── Dockerfile             # ML service container
 │   ├── api.py                 # FastAPI application
