@@ -12,6 +12,10 @@ services:
     volumes:
       - C:\Users\XY373VZ\OneDrive - EY\Desktop\ingdelsoftware\postgres_data:/var/lib/postgresql/data
     restart: always
+    profiles:
+      - core  # Core services profile
+      - full  # Full stack profile
+
   backend:
     container_name: backend_container
     env_file: ./.env
@@ -30,6 +34,9 @@ services:
     depends_on:
       - db
     restart: always
+    profiles:
+      - core  # Core services profile
+      - full  # Full stack profile
 
   video-classifier:
     container_name: video_classifier_container
@@ -39,3 +46,6 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    profiles:
+      - ml  # Machine Learning profile
+      - full  # Full stack profile
