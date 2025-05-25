@@ -6,31 +6,28 @@ services:
     env_file: ./.env
     image: postgres
     environment:
-      - POSTGRES_USER=$POSTGRESDB_USER
-      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
-      - POSTGRES_DB=$POSTGRESDB_DATABASE
-    volumes:
-      - C:\Users\XY373VZ\OneDrive - EY\Desktop\ingdelsoftware\postgres_data:/var/lib/postgresql/data
+      - POSTGRES_USER=${POSTGRESDB_USER}
+      - POSTGRES_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
+      - POSTGRES_DB=${POSTGRESDB_DATABASE}
+    # volumes:
+    #   - ./backend/postgres_data:/var/lib/postgresql/data
     restart: always
     profiles:
       - core  # Core services profile
       - full  # Full stack profile
-
   backend:
     container_name: backend_container
     env_file: ./.env
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - .:/app
     environment:
       - DB_URL=jdbc:postgresql://db:5432/emotion_recognition
-      - DB_USERNAME=$POSTGRESDB_USER
-      - DB_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
-      - AZURE_STORAGE_CONN_STRING=$AZURE_STORAGE_CONN_STRING
+      - DB_USERNAME=${POSTGRESDB_USER}
+      - DB_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
+      - AZURE_STORAGE_CONN_STRING=${AZURE_STORAGE_CONN_STRING}
     depends_on:
       - db
     restart: always
@@ -49,3 +46,7 @@ services:
     profiles:
       - ml  # Machine Learning profile
       - full  # Full stack profile
+
+volumes:
+  postgres_data:
+    driver: local
