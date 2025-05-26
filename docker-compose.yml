@@ -3,7 +3,7 @@ services:
     ports:
       - "5432:5432"
     container_name: postgresql_container
-    env_file: ./.env
+    env_file: .env
     image: postgres
     environment:
       - POSTGRES_USER=${POSTGRESDB_USER}
@@ -17,7 +17,7 @@ services:
       - full  # Full stack profile
   backend:
     container_name: backend_container
-    env_file: ./.env
+    env_file: .env
     build:
       context: ./backend
       dockerfile: Dockerfile
