@@ -26,7 +26,7 @@ public class ReactionsService {
         for (ImageDescriptionAndReactionPayload imageDescrAndReac: payload.imagesDescriptionsAndReactions()) {
             ReactionsEntity newResult = ReactionsEntity.builder()
                     .userId(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
-                    .imageId(imageDescrAndReac.imageId())
+                    .image(imageDescrAndReac.image())
                     .imageDescription(imageDescrAndReac.description())
                     .imageReaction(imageDescrAndReac.reaction())
                     .aiComment(imageDescrAndReac.aiComment())
