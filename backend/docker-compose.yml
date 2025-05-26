@@ -1,0 +1,51 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+    container_name: postgresql_container
+    env_file: ./.env
+    image: postgres
+    environment:
+      - POSTGRES_USER=$POSTGRESDB_USER
+      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRESDB_DATABASE
+    volumes:
+      - C:\Users\XY373VZ\OneDrive - EY\Desktop\ingdelsoftware\postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    container_name: backend_container
+    env_file: ./.env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/emotion_recognition
+      - DB_USERNAME=$POSTGRESDB_USER
+      - DB_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - AZURE_STORAGE_CONN_STRING=$AZURE_STORAGE_CONN_STRING
+      - AZURE_STORAGE_CONTAINER_NAME=$AZURE_STORAGE_CONTAINER_NAME
+      - AZURE_STORAGE_SAS_TOKEN=$AZURE_STORAGE_SAS_TOKEN
+    depends_on:
+      - db
+    restart: always
+
+  #ai-service:
+   # container_name: ai_service_container
+    #build:
+     # context: C:\Users\XY373VZ\OneDrive - EY\Desktop\ingdelsoftware\emotions_recognition\video_classifier
+      #dockerfile: Dockerfile
+    #ports:
+     # - "8000:8000"
+
+  #frontend:
+   # container_name: frontend_container
+    #build:
+     # context: C:\Users\XY373VZ\OneDrive - EY\Desktop\ingdelsoftware\frontend
+      #dockerfile: Dockerfile
+    #ports:
+     # - "8081:8081"

@@ -7,6 +7,8 @@ import com.eyxpoliba.emotion_recognition.repository.ReactionsRepository;
 import com.eyxpoliba.emotion_recognition.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -18,13 +20,15 @@ public class ReactionsService {
     private final UserRepository userRepository;
 
     public ResponseEntity<Object> registerResult(ResultPayload payload) {
-        System.out.println(payload);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) authentication.getCredentials();
+
         for (ImageDescriptionAndReactionPayload imageDescrAndReac: payload.imagesDescriptionsAndReactions()) {
             ReactionsEntity newResult = ReactionsEntity.builder()
-                    .userId(userRepository.findById(payload.userId()).orElseThrow(() -> new RuntimeException("User not found")))
+                    .userId(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
                     .imageId(imageDescrAndReac.imageId())
                     .imageDescription(imageDescrAndReac.description())
-                    .imageReaction(imageDescrAndReac.reaction().toString())
+                    .imageReaction(imageDescrAndReac.reaction())
                     .aiComment(imageDescrAndReac.aiComment())
                     .build();
 

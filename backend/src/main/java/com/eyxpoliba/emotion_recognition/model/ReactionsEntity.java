@@ -21,7 +21,7 @@ public class ReactionsEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserEntity userId;
 
-    private String imageId;
+    private String image;
 
     private String imageDescription;
 
