@@ -7,7 +7,7 @@ from emotion_recognizer import EmotionRecognizer, EmotionResponse
 app = FastAPI()
 emotion_recognizer = EmotionRecognizer()
 
-@app.post("/predict/", response_model=EmotionResponse)
+@app.post("/api/predict/", response_model=EmotionResponse)
 async def predict_emotion(file: UploadFile = File(...)):
     """Endpoint to predict emotion from uploaded image"""
     contents = await file.read()
