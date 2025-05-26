@@ -70,4 +70,4 @@ EXPOSE 8000
 USER appuser
 
 # Run the API server using uvicorn
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--limit-max-request", "52428800"]
