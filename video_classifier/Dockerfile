@@ -56,7 +56,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=build /app/emotion_recognizer/models /app/emotion_recognizer/models
 
 # Copy application files
-COPY api.py ./
+COPY api.py config.py jwt_middleware.py jwt_auth.py ./
 COPY emotion_recognizer ./emotion_recognizer/
 
 # Fix permissions
