@@ -30,6 +30,8 @@ services:
       - AZURE_STORAGE_CONN_STRING=${AZURE_STORAGE_CONN_STRING}
       - AZURE_STORAGE_SAS_TOKEN=${AZURE_STORAGE_SAS_TOKEN}
       - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME}
+      - SECURITY_ISSUER=${SECURITY_ISSUER}
+      - SECURITY_SECRET=${SECURITY_SECRET}
     depends_on:
       - db
     restart: always
@@ -45,6 +47,8 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    env_file:
+      - .env
     profiles:
       - ml  # Machine Learning profile
       - full  # Full stack profile

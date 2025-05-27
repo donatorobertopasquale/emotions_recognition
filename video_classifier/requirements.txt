@@ -3,7 +3,8 @@ torchvision
 fastapi
 python-multipart
 uvicorn[standard]
-dlib==19.24.4
+PyJWT
+dlib>=19.24.2
 matplotlib==3.8.3
 numpy==1.26.4
 opencv_python==4.9.0.80
