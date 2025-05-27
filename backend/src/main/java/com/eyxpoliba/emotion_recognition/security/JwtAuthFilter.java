@@ -29,10 +29,6 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
-    private final ApplicationContext context;
-
-    private static final String BEARER = "Bearer ";
-
 
     static public void build401Error(HttpServletResponse response, String message) throws IOException {
         response.setContentType(APPLICATION_JSON_VALUE);
@@ -53,18 +49,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String authorizationHeader = request.getHeader(AUTHORIZATION);
-        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER) || authorizationHeader.length() == BEARER.length()) {
-            build401Error(response, "Malformed authorization header");
+        // Get JWT token from cookies
+        String token = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (token == null || token.isEmpty()) {
+            build401Error(response, "JWT token not found in cookies");
             return;
         }
 
         try {
-            String token = authorizationHeader.substring(BEARER.length());
-
             if (!jwtProvider.validateToken(token)) {
                 build401Error(response, "Invalid JWT token");
+                return;
             }
+
             // Extract claims and set Authentication object
             String username = jwtProvider.getUsernameFromToken(token);
             Long userId = Long.valueOf(jwtProvider.getClaimFromToken(token, claims -> claims.get("userId").toString()));

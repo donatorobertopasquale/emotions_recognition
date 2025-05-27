@@ -25,8 +25,13 @@ public class AppController {
     private final ReactionsService reactionsService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody UserEntity user) {
-        return userService.login(user);
+    public ResponseEntity<LoginResponse> login(@RequestBody UserEntity user, jakarta.servlet.http.HttpServletResponse response) {
+        return userService.login(user, response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Object> logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        return userService.logout(request, response);
     }
 
     @GetMapping("/download-image")
