@@ -35,6 +35,6 @@ public class ReactionsService {
             reactionsRepository.save(newResult);
         }
 
-        return ResponseEntity.created(URI.create("/api/register-result")).body("Result registered successfully");
+            return ResponseEntity.created(URI.create("/api/register-result")).body("{\"message\": \"Result registered successfully\"}");
     }
 }
