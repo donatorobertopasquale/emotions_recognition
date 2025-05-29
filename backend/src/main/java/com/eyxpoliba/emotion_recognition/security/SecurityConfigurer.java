@@ -27,6 +27,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @Configuration
 public class SecurityConfigurer {
     private final JwtAuthFilter jwtAuthFilter;
+    private final BlacklistJwtFilter blacklistJwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -41,6 +42,7 @@ public class SecurityConfigurer {
         });
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(blacklistJwtFilter, JwtAuthFilter.class);
 
         return http.build();
     }
