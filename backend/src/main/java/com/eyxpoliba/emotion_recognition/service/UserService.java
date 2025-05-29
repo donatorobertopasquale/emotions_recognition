@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.eyxpoliba.emotion_recognition.security.SecurityConstants.ACCESS_TOKEN;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -33,7 +35,7 @@ public class UserService {
         List<String> imagesName = azureStorageService.getRandomBlobNames(10);
 
         // Set JWT token as a cookie
-        Cookie jwtCookie = new Cookie("accessToken", tokens.get("access_token"));
+        Cookie jwtCookie = new Cookie(ACCESS_TOKEN, tokens.get("access_token"));
         //jwtCookie.setHttpOnly(true);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(60 * 60); // 1 hour, matching the token expiration
@@ -52,11 +54,11 @@ public class UserService {
         String token = null;
         if (request.getCookies() != null) {
             for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("jwt".equals(cookie.getName())) {
+                if (ACCESS_TOKEN.equals(cookie.getName())) {
                     token = cookie.getValue();
 
                     // Clear the cookie
-                    Cookie clearCookie = new Cookie("jwt", "");
+                    Cookie clearCookie = new Cookie(ACCESS_TOKEN, "");
                     //clearCookie.setHttpOnly(true);
                     clearCookie.setPath("/");
                     clearCookie.setMaxAge(0); // Delete the cookie

@@ -7,12 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,6 +19,7 @@ import java.util.Map;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
+import static com.eyxpoliba.emotion_recognition.security.SecurityConstants.ACCESS_TOKEN;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = null;
         if (request.getCookies() != null) {
             for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
+                if (ACCESS_TOKEN.equals(cookie.getName())) {
                     token = cookie.getValue();
                     break;
                 }
