@@ -16,6 +16,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         self.jwt_auth = JWTAuthFilter()
         self.excluded_paths = excluded_paths or [
             "/api/health",
+            "/api/connections/count",
             "/docs", 
             "/redoc", 
             "/openapi.json",

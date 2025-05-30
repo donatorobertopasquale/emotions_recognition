@@ -7,4 +7,5 @@
 *.log
 old
 emotion_recognizer/npu
+emotion_recognizer/models/*
 **/__pycache__
