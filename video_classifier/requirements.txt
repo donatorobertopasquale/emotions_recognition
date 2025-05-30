@@ -16,3 +16,4 @@ torch
 torchvision
 tqdm==4.66.1
 urllib3==2.2.1
+tf-keras==2.19.0

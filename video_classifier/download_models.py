@@ -19,6 +19,7 @@ def download_models():
     """Download and cache the video emotion recognition model"""
     
     model_id = "GabrieleConte/ResEmoteNet"
+    model_id_2 ="michellejieli/emotion_text_classifier"
     cache_dir = os.path.join(os.path.dirname(__file__), 'emotion_recognizer', 'models')
     
     # Create cache directory if it doesn't exist
@@ -34,6 +35,11 @@ def download_models():
             repo_id=model_id,
             cache_dir=cache_dir,
             local_dir=os.path.join(cache_dir, "ResEmoteNet"),
+        )
+        model_path_2 = snapshot_download(
+            repo_id=model_id_2,
+            cache_dir=cache_dir,
+            local_dir=os.path.join(cache_dir, "emotion_text_classifier"),
         )
         logger.info(f"Model downloaded successfully to {model_path}")
         
