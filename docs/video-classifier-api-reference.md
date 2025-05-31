@@ -9,6 +9,7 @@ The Video Classifier API provides emotion recognition capabilities through a Fas
 - [Base URL](#base-url)
 - [Authentication](#authentication)
 - [Endpoints](#endpoints)
+- [WebSocket Endpoints](#websocket-endpoints)
 - [Data Models](#data-models)
 - [Error Handling](#error-handling)
 - [Rate Limiting](#rate-limiting)
@@ -178,6 +179,151 @@ curl -X POST "http://localhost:8000/api/predict/" \
 }
 ```
 
+---
+
+### Active Connections Count
+
+Get the current number of active WebSocket connections.
+
+```http
+GET /api/connections/count
+```
+
+#### Response
+
+```json
+{
+  "active_connections": 3,
+  "timestamp": 1748610712.473023
+}
+```
+
+**Status Codes:**
+- `200 OK` - Successful response
+- `503 Service Unavailable` - Service is down
+
+---
+
+## WebSocket Endpoints
+
+### Real-time Emotion Classification
+
+Establish a WebSocket connection for real-time text-based emotion classification and active user tracking.
+
+```
+WS /api/ws
+```
+
+#### Authentication
+
+WebSocket connections require JWT authentication via cookies:
+
+```javascript
+// Set JWT token as cookie before connecting
+document.cookie = `access_token=${jwtToken}; path=/`;
+// or
+document.cookie = `token=${jwtToken}; path=/`;
+```
+
+#### Connection Process
+
+1. **Authentication**: JWT token must be present in cookies
+2. **Connection**: WebSocket connection is established
+3. **Active User Tracking**: Connection count is broadcast to all clients
+4. **Message Exchange**: Send text for emotion classification
+5. **Cleanup**: Connection is removed and count updated on disconnect
+
+#### Message Types
+
+The WebSocket endpoint supports different message types:
+
+##### 1. Emotion Classification Input
+Send plain text for emotion analysis:
+
+```javascript
+ws.send("I'm feeling great today!");
+```
+
+##### 2. Emotion Classification Response
+
+```json
+{
+  "type": "emotion_classification",
+  "label": "joy",
+  "score": 0.9887
+}
+```
+
+##### 3. Connection Update Messages
+
+Automatically sent when users connect/disconnect:
+
+```json
+{
+  "type": "connection_update",
+  "active_connections": 5,
+  "timestamp": 1748610712.473023
+}
+```
+
+##### 4. Error Messages
+
+```json
+{
+  "type": "error",
+  "message": "Classification failed"
+}
+```
+
+#### WebSocket Connection Example
+
+```javascript
+// Set authentication cookie
+document.cookie = `access_token=${jwtToken}; path=/`;
+
+// Connect to WebSocket
+const ws = new WebSocket('ws://localhost:8000/api/ws');
+
+ws.onopen = () => {
+    console.log('Connected to emotion classifier');
+};
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    switch (data.type) {
+        case 'emotion_classification':
+            console.log(`Emotion: ${data.label} (${data.score})`);
+            break;
+            
+        case 'connection_update':
+            console.log(`Active users: ${data.active_connections}`);
+            break;
+            
+        case 'error':
+            console.error(`Error: ${data.message}`);
+            break;
+    }
+};
+
+// Send text for classification
+ws.send("This is an amazing day!");
+```
+
+#### WebSocket Error Codes
+
+- **4001**: Authentication failed (missing or invalid JWT token)
+- **1000**: Normal closure
+- **1006**: Abnormal closure (connection lost)
+
+#### Features
+
+- **Real-time Processing**: Instant emotion classification from text
+- **Active User Tracking**: Live count of connected users
+- **Automatic Reconnection**: Client-side reconnection support
+- **JWT Authentication**: Secure connection with token validation
+- **Broadcasting**: Connection updates sent to all connected clients
+
 ## Data Models
 
 ### EmotionResponse
@@ -269,11 +415,19 @@ Currently, no rate limiting is implemented at the API level. Consider implementi
 ```python
 import requests
 import json
+import websocket
+import threading
+from typing import Callable, Optional
 
 class EmotionClassifierClient:
     def __init__(self, base_url, jwt_token):
         self.base_url = base_url
+        self.jwt_token = jwt_token
         self.headers = {"Authorization": f"Bearer {jwt_token}"}
+        self.ws = None
+        self.ws_thread = None
+        self.message_callback = None
+        self.connection_callback = None
     
     def predict_emotion(self, file_path):
         """Predict emotion from video/image file"""
@@ -288,16 +442,108 @@ class EmotionClassifierClient:
         else:
             response.raise_for_status()
     
+    def get_active_connections(self):
+        """Get current number of active WebSocket connections"""
+        url = f"{self.base_url}/api/connections/count"
+        response = requests.get(url)
+        return response.json()
+    
     def health_check(self):
         """Check service health"""
         url = f"{self.base_url}/api/health"
         response = requests.get(url)
         return response.json()
+    
+    def connect_websocket(self, 
+                         message_callback: Optional[Callable] = None,
+                         connection_callback: Optional[Callable] = None):
+        """Connect to WebSocket for real-time emotion classification"""
+        self.message_callback = message_callback
+        self.connection_callback = connection_callback
+        
+        # Convert HTTP URL to WebSocket URL
+        ws_url = self.base_url.replace('http://', 'ws://').replace('https://', 'wss://')
+        ws_url = f"{ws_url}/api/ws"
+        
+        # Set up WebSocket with cookie authentication
+        cookie = f"access_token={self.jwt_token}"
+        
+        def on_message(ws, message):
+            try:
+                data = json.loads(message)
+                if self.message_callback:
+                    self.message_callback(data)
+                else:
+                    print(f"Received: {data}")
+            except json.JSONDecodeError:
+                print(f"Invalid JSON received: {message}")
+        
+        def on_error(ws, error):
+            print(f"WebSocket error: {error}")
+        
+        def on_close(ws, close_status_code, close_msg):
+            print("WebSocket connection closed")
+        
+        def on_open(ws):
+            print("WebSocket connection established")
+            if self.connection_callback:
+                self.connection_callback("connected")
+        
+        # Create WebSocket connection
+        self.ws = websocket.WebSocketApp(
+            ws_url,
+            header=[f"Cookie: {cookie}"],
+            on_open=on_open,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close
+        )
+        
+        # Run WebSocket in separate thread
+        self.ws_thread = threading.Thread(target=self.ws.run_forever)
+        self.ws_thread.daemon = True
+        self.ws_thread.start()
+    
+    def send_text(self, text: str):
+        """Send text for emotion classification via WebSocket"""
+        if self.ws and self.ws.sock:
+            self.ws.send(text)
+        else:
+            raise ConnectionError("WebSocket not connected")
+    
+    def disconnect_websocket(self):
+        """Disconnect from WebSocket"""
+        if self.ws:
+            self.ws.close()
+            self.ws = None
+        if self.ws_thread:
+            self.ws_thread.join(timeout=1)
+            self.ws_thread = None
 
 # Usage example
+def on_emotion_result(data):
+    if data.get('type') == 'emotion_classification':
+        print(f"Emotion: {data['label']} (confidence: {data['score']:.2f})")
+    elif data.get('type') == 'connection_update':
+        print(f"Active users: {data['active_connections']}")
+
+def on_connection_status(status):
+    print(f"Connection status: {status}")
+
 client = EmotionClassifierClient("http://localhost:8000", "your-jwt-token")
+
+# File-based prediction
 result = client.predict_emotion("sample_video.mp4")
 print(f"Detected emotion: {result['emotion']} (confidence: {result['confidence']:.2f})")
+
+# Real-time WebSocket prediction
+client.connect_websocket(on_emotion_result, on_connection_status)
+client.send_text("I'm feeling great today!")
+
+# Get active connections
+connections = client.get_active_connections()
+print(f"Current active connections: {connections['active_connections']}")
+```
 ```
 
 ### JavaScript SDK
@@ -306,9 +552,13 @@ print(f"Detected emotion: {result['emotion']} (confidence: {result['confidence']
 class EmotionClassifierClient {
     constructor(baseUrl, jwtToken) {
         this.baseUrl = baseUrl;
+        this.jwtToken = jwtToken;
         this.headers = {
             'Authorization': `Bearer ${jwtToken}`
         };
+        this.ws = null;
+        this.messageCallback = null;
+        this.connectionCallback = null;
     }
 
     async predictEmotion(file) {
@@ -324,6 +574,133 @@ class EmotionClassifierClient {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        return await response.json();
+    }
+
+    async getActiveConnections() {
+        const response = await fetch(`${this.baseUrl}/api/connections/count`);
+        return await response.json();
+    }
+
+    async healthCheck() {
+        const response = await fetch(`${this.baseUrl}/api/health`);
+        return await response.json();
+    }
+
+    connectWebSocket(messageCallback = null, connectionCallback = null) {
+        this.messageCallback = messageCallback;
+        this.connectionCallback = connectionCallback;
+
+        // Set JWT token as cookie for authentication
+        document.cookie = `access_token=${this.jwtToken}; path=/; SameSite=Lax`;
+
+        // Convert HTTP URL to WebSocket URL
+        const wsUrl = this.baseUrl
+            .replace('http://', 'ws://')
+            .replace('https://', 'wss://') + '/api/ws';
+
+        this.ws = new WebSocket(wsUrl);
+
+        this.ws.onopen = () => {
+            console.log('WebSocket connected');
+            if (this.connectionCallback) {
+                this.connectionCallback('connected');
+            }
+        };
+
+        this.ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (this.messageCallback) {
+                    this.messageCallback(data);
+                } else {
+                    console.log('Received:', data);
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
+
+        this.ws.onclose = (event) => {
+            console.log('WebSocket disconnected:', event.code, event.reason);
+            if (this.connectionCallback) {
+                this.connectionCallback('disconnected');
+            }
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            if (this.connectionCallback) {
+                this.connectionCallback('error');
+            }
+        };
+    }
+
+    sendText(text) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(text);
+        } else {
+            throw new Error('WebSocket not connected');
+        }
+    }
+
+    disconnectWebSocket() {
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+    }
+}
+
+// Usage example
+const client = new EmotionClassifierClient('http://localhost:8000', 'your-jwt-token');
+
+// File-based prediction
+document.getElementById('file-input').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        try {
+            const result = await client.predictEmotion(file);
+            console.log(`Detected emotion: ${result.emotion} (confidence: ${result.confidence.toFixed(2)})`);
+        } catch (error) {
+            console.error('Prediction failed:', error);
+        }
+    }
+});
+
+// Real-time WebSocket prediction
+function onMessage(data) {
+    switch (data.type) {
+        case 'emotion_classification':
+            console.log(`Emotion: ${data.label} (confidence: ${data.score.toFixed(2)})`);
+            break;
+        case 'connection_update':
+            console.log(`Active users: ${data.active_connections}`);
+            break;
+        case 'error':
+            console.error(`Error: ${data.message}`);
+            break;
+    }
+}
+
+function onConnection(status) {
+    console.log(`Connection status: ${status}`);
+}
+
+// Connect to WebSocket
+client.connectWebSocket(onMessage, onConnection);
+
+// Send text for classification
+setTimeout(() => {
+    client.sendText("I'm feeling amazing today!");
+}, 1000);
+
+// Get active connections
+client.getActiveConnections().then(data => {
+    console.log(`Current active connections: ${data.active_connections}`);
+});
+```
 
         return await response.json();
     }

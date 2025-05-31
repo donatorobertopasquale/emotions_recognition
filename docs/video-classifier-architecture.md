@@ -2,7 +2,14 @@
 
 ## Overview
 
-The Video Classifier service is a FastAPI-based microservice that provides real-time emotion recognition from video files and image uploads. It implements state-of-the-art computer vision and deep learning techniques to analyze facial expressions and classify emotions with high accuracy.
+The Video Classifier service is a FastAPI-based microservice that provides comprehensive emotion recognition capabilities through multiple channels:
+
+- **File-based Processing**: Real-time emotion recognition from video files and image uploads using state-of-the-art computer vision and deep learning techniques to analyze facial expressions
+- **Text-based Processing**: Real-time emotion classification from text input using transformer-based natural language processing models  
+- **WebSocket Communication**: Live bidirectional communication for real-time text emotion analysis and active user tracking
+- **Connection Monitoring**: Real-time tracking and broadcasting of active WebSocket connections to all connected clients
+
+The service implements advanced ML architectures including custom ResNet-based emotion recognition models and HuggingFace transformer pipelines for comprehensive emotion analysis across different media types.
 
 ## Table of Contents
 
@@ -30,8 +37,13 @@ The Video Classifier service is a FastAPI-based microservice that provides real-
 │  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │    API      │  │   Config    │  │   JWT Auth Filter   │ │
-│  │  Endpoints  │  │  Manager    │  │                     │ │
+│  │ REST API    │  │  WebSocket  │  │   Connection        │ │
+│  │ Endpoints   │  │  Endpoints  │  │   Tracking          │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │   Config    │  │ JWT Auth    │  │  Text Emotion       │ │
+│  │  Manager    │  │  Filter     │  │  Classification     │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                 Emotion Recognition Engine                  │
@@ -41,8 +53,8 @@ The Video Classifier service is a FastAPI-based microservice that provides real-
 │  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   OpenCV    │  │   PyTorch   │  │      Pillow         │ │
-│  │ Computer    │  │  Deep       │  │  Image Processing   │ │
+│  │   OpenCV    │  │   PyTorch   │  │  Transformers       │ │
+│  │ Computer    │  │  Deep       │  │  Text Processing    │ │
 │  │   Vision    │  │ Learning    │  │                     │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
@@ -50,6 +62,7 @@ The Video Classifier service is a FastAPI-based microservice that provides real-
 
 ### Component Interaction Flow
 
+#### REST API Flow
 ```
 Client Request → CORS Middleware → JWT Middleware → API Endpoint
                                                          ↓
@@ -64,6 +77,23 @@ Client Request → CORS Middleware → JWT Middleware → API Endpoint
                                                 Response with Results
 ```
 
+#### WebSocket Flow
+```
+Client WebSocket → Cookie Auth → JWT Validation → WebSocket Accept
+                                                         ↓
+                                           Connection Tracking (Add to Set)
+                                                         ↓
+                                        Broadcast Connection Count to All Clients
+                                                         ↓
+                                              Text Message Received
+                                                         ↓
+                                    Text Emotion Classification (Transformers)
+                                                         ↓
+                                           Send Classification Result
+                                                         ↓
+                                  Connection Close → Remove from Set → Broadcast Update
+```
+
 ## Technology Stack
 
 ### Core Technologies
@@ -74,8 +104,10 @@ Client Request → CORS Middleware → JWT Middleware → API Endpoint
 | **ML Framework** | PyTorch | Latest | Deep learning model inference |
 | **Computer Vision** | OpenCV | 4.9.0.80 | Face detection and image processing |
 | **Image Processing** | Pillow | 10.3.0 | Image manipulation and format handling |
+| **Text Processing** | Transformers | Latest | Text-based emotion classification |
 | **Authentication** | PyJWT | Latest | JWT token validation and processing |
 | **HTTP Server** | Uvicorn | Latest | ASGI server for FastAPI |
+| **WebSocket Support** | FastAPI WebSocket | Latest | Real-time bidirectional communication |
 
 ### Development Dependencies
 
@@ -125,7 +157,27 @@ The core ML pipeline for emotion detection:
 - **SE-Block Integration**: Squeeze-and-Excitation attention mechanism
 - **Residual Connections**: Skip connections for improved gradient flow
 
-### 3. Authentication System
+### 3. WebSocket Real-time Communication (`api.py`)
+
+Real-time text emotion classification and user tracking:
+
+#### **Connection Management**
+- **Active Connection Tracking**: Global set to track WebSocket connections
+- **Connection Broadcasting**: Real-time updates to all connected clients
+- **Automatic Cleanup**: Proper disconnection handling and resource cleanup
+
+#### **Text Emotion Classification**
+- **Transformers Pipeline**: HuggingFace emotion classification model
+- **Real-time Processing**: Instant emotion analysis from text input
+- **Message Type System**: Structured responses with type identification
+
+#### **Features**
+- **JWT Cookie Authentication**: Secure WebSocket connections
+- **Active User Count**: Real-time tracking and broadcasting of connected users
+- **Message Broadcasting**: Push notifications to all connected clients
+- **Error Handling**: Graceful error responses and connection management
+
+### 4. Authentication System
 
 #### `jwt_middleware.py`
 ```python
@@ -153,7 +205,13 @@ class JWTAuthFilter:
     - User information extraction
 ```
 
-### 4. Configuration Management (`config.py`)
+#### **WebSocket Authentication**
+- **Cookie-based Authentication**: JWT tokens read from `access_token` or `token` cookies
+- **Pre-connection Validation**: Token validation before WebSocket acceptance
+- **Connection Rejection**: Proper error codes (4001) for authentication failures
+- **User Context**: Username and user ID extraction from validated tokens
+
+### 5. Configuration Management (`config.py`)
 
 Environment-based configuration system:
 - JWT secret and issuer management
@@ -253,11 +311,48 @@ GET /api/health
 - Returns service status
 - Used for load balancer health checks
 
-# Emotion Prediction
+# Active Connections Count
+GET /api/connections/count
+- No authentication required
+- Returns current WebSocket connection count
+- Used for monitoring active users
+
+# Emotion Prediction (File-based)
 POST /api/predict/
 - JWT authentication required
 - File upload (multipart/form-data)
 - Returns emotion classification results
+
+# Real-time Emotion Classification (WebSocket)
+WS /api/ws
+- JWT cookie authentication required
+- Real-time text emotion classification
+- Active user tracking and broadcasting
+- Bidirectional communication
+```
+
+### WebSocket Message Types
+
+```python
+# Emotion Classification Response
+{
+    "type": "emotion_classification",
+    "label": "joy", 
+    "score": 0.9887
+}
+
+# Connection Update Broadcast
+{
+    "type": "connection_update",
+    "active_connections": 5,
+    "timestamp": 1748610712.473023
+}
+
+# Error Response
+{
+    "type": "error",
+    "message": "Classification failed"
+}
 ```
 
 ### Response Models
