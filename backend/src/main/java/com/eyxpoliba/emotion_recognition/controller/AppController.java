@@ -8,13 +8,9 @@ import com.eyxpoliba.emotion_recognition.service.ReactionsService;
 import com.eyxpoliba.emotion_recognition.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +19,11 @@ public class AppController {
     private final UserService userService;
     private final AzureStorageService azureStorageService;
     private final ReactionsService reactionsService;
+
+    @GetMapping("/public/home")
+    public ResponseEntity<String> home() {
+        return ResponseEntity.ok("Welcome to the Emotion Recognition System");
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody UserEntity user, jakarta.servlet.http.HttpServletResponse response) {
