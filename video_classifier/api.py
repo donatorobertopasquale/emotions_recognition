@@ -93,7 +93,7 @@ logger.info("JWT authentication middleware added")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=[os.getenv("CORS_ORIGIN", "*")],  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
