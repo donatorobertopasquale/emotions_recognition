@@ -22,6 +22,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Slf4j
@@ -54,17 +56,17 @@ public class SecurityConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow specific origins instead of wildcard when credentials are needed
-        configuration.addAllowedOrigin("http://localhost:3000"); // React dev server
-        configuration.addAllowedOrigin("http://localhost:5173"); // Vite dev server
-        configuration.addAllowedOrigin("http://localhost:8080"); // Alternative dev server
-        configuration.addAllowedOrigin("http://127.0.0.1:3000");
-        configuration.addAllowedOrigin("http://127.0.0.1:5173");
-        configuration.addAllowedOrigin("https://emotion-recognition-g6c5fdhcadbfgmbk.italynorth-01.azurewebsites.net");
         
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
-        configuration.setAllowCredentials(true); // Allow credentials (JWT tokens, cookies)
+        // Use patterns instead of exact origins
+        configuration.addAllowedOriginPattern("http://localhost*");
+        configuration.addAllowedOriginPattern("http://127.0.0.1*");
+        configuration.addAllowedOriginPattern("https://emotion-recognition.gentlestone-6622e697.italynorth.azurecontainerapps.io");
+        configuration.addAllowedOriginPattern("*azurecontainerapps.io");
+        
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
