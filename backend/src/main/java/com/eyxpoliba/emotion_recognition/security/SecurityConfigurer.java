@@ -22,6 +22,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Slf4j
@@ -54,10 +56,17 @@ public class SecurityConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("*");
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
-        configuration.setAllowCredentials(false); // Must be false when allowedOrigin is "*"
+        
+        // Use patterns instead of exact origins
+        configuration.addAllowedOriginPattern("http://localhost*");
+        configuration.addAllowedOriginPattern("http://127.0.0.1*");
+        configuration.addAllowedOriginPattern("https://emotion-recognition.gentlestone-6622e697.italynorth.azurecontainerapps.io");
+        configuration.addAllowedOriginPattern("*azurecontainerapps.io");
+        
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
