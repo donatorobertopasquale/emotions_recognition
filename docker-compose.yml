@@ -24,9 +24,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_URL=jdbc:sqlserver://emotion-recognition-db-server.database.windows.net:1433;database=emotion_recognition;user=politecnico@emotion-recognition-db-server;password=gabriele1!;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-      - DB_USERNAME=politecnico@emotion-recognition-db-server
-      - DB_PASSWORD=gabriele1!
+      - DB_URL=${AZURE_DB_URL}
+      - DB_USERNAME=${AZURE_DB_USERNAME}
+      - DB_PASSWORD=${AZURE_DB_PASSWORD}
       - AZURE_STORAGE_CONN_STRING=${AZURE_STORAGE_CONN_STRING}
       - AZURE_STORAGE_SAS_TOKEN=${AZURE_STORAGE_SAS_TOKEN}
       - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME}
