@@ -1,20 +1,20 @@
 services:
-  db:
-    ports:
-      - "5432:5432"
-    container_name: postgresql_container
-    env_file: .env
-    image: postgres
-    environment:
-      - POSTGRES_USER=${POSTGRESDB_USER}
-      - POSTGRES_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
-      - POSTGRES_DB=${POSTGRESDB_DATABASE}
-    # volumes:
-    #   - ./backend/postgres_data:/var/lib/postgresql/data
-    restart: always
-    profiles:
-      - core  # Core services profile
-      - full  # Full stack profile
+  # db:
+  #   ports:
+  #     - "5432:5432"
+  #   container_name: postgresql_container
+  #   env_file: .env
+  #   image: postgres
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRESDB_USER}
+  #     - POSTGRES_PASSWORD=${POSTGRESDB_ROOT_PASSWORD}
+  #     - POSTGRES_DB=${POSTGRESDB_DATABASE}
+  #   # volumes:
+  #   #   - ./backend/postgres_data:/var/lib/postgresql/data
+  #   restart: always
+  #   profiles:
+  #     - core  # Core services profile
+  #     - full  # Full stack profile
   backend:
     container_name: backend_container
     env_file: .env
@@ -32,8 +32,9 @@ services:
       - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME}
       - SECURITY_ISSUER=${SECURITY_ISSUER}
       - SECURITY_SECRET=${SECURITY_SECRET}
-    depends_on:
-      - db
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    # depends_on:
+    #   - db
     restart: always
     profiles:
       - core  # Core services profile

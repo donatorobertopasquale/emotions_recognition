@@ -8,6 +8,7 @@ from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.security.utils import get_authorization_scheme_param
 from config import Config
+from google_auth import GoogleTokenVerifier
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -16,8 +17,13 @@ logger = logging.getLogger(__name__)
 class JWTProvider:
     def __init__(self):
         base64_secret = Config.get_security_secret()
-        # Decode the base64 secret key
-        self.secret_key = base64.b64decode(base64_secret)
+        try:
+            # Try to decode as base64 first
+            self.secret_key = base64.b64decode(base64_secret)
+        except Exception:
+            # If not valid base64, use as-is (encode to bytes)
+            self.secret_key = base64_secret.encode('utf-8')
+        
         self.issuer = Config.get_security_issuer()
         
         # Log configuration (without exposing the secret)
@@ -95,6 +101,7 @@ class JWTProvider:
 class JWTAuthFilter:
     def __init__(self):
         self.jwt_provider = JWTProvider()
+        self.google_verifier = GoogleTokenVerifier()
         self.bearer_scheme = HTTPBearer(auto_error=False)
     
     def get_token_from_request(self, request: Request) -> Optional[str]:
@@ -127,17 +134,49 @@ class JWTAuthFilter:
                 detail="Malformed authorization header or missing token"
             )
         
-        if not self.jwt_provider.validate_token(token):
-            raise HTTPException(status_code=401, detail="Invalid JWT token")
-        
+        # Try to validate as internal JWT first
         try:
-            username = self.jwt_provider.get_username_from_token(token)
-            user_id = self.jwt_provider.get_user_id_from_token(token)
-            
+            if self.jwt_provider.validate_token(token):
+                username = self.jwt_provider.get_username_from_token(token)
+                user_id = self.jwt_provider.get_user_id_from_token(token)
+                
+                return {
+                    "username": username,
+                    "user_id": user_id,
+                    "token": token,
+                    "token_type": "internal"
+                }
+        except Exception as e:
+            logger.debug(f"Token validation as internal JWT failed: {e}")
+        
+        # If internal JWT validation fails, try Google token validation
+        try:
+            google_payload = self.google_verifier.verify_token(token)
             return {
-                "username": username,
-                "user_id": user_id,
-                "token": token
+                "username": google_payload.get("email"),
+                "user_id": google_payload.get("sub"),  # Google user ID
+                "email": google_payload.get("email"),
+                "google_id": google_payload.get("sub"),
+                "token": token,
+                "token_type": "google"
             }
         except Exception as e:
-            raise HTTPException(status_code=401, detail=str(e))
+            logger.debug(f"Token validation as Google JWT failed: {e}")
+        
+        # If both validations fail, raise error
+        raise HTTPException(status_code=401, detail="Invalid JWT token")
+    
+    def verify_google_token(self, token: str) -> Dict[str, Any]:
+        """Verify Google ID token and return payload"""
+        try:
+            payload = self.google_verifier.verify_token(token)
+            return {
+                "google_id": payload.get("sub"),
+                "email": payload.get("email"),
+                "name": payload.get("name"),
+                "picture": payload.get("picture"),
+                "email_verified": payload.get("email_verified", False)
+            }
+        except Exception as e:
+            logger.error(f"Google token verification failed: {e}")
+            raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")

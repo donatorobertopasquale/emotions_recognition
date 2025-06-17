@@ -19,4 +19,11 @@ public class UserEntity {
     private int age;
     private String gender;
     private String nationality;
+    
+    // Google OAuth fields
+    @Column(unique = true, nullable = false)
+    private String googleId;
+    
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean emailVerified = true;
 }

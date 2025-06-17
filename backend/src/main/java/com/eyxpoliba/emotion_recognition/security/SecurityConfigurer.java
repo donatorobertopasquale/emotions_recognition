@@ -42,6 +42,7 @@ public class SecurityConfigurer {
         http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(requests -> {
             requests.requestMatchers("/api/*/public/*").permitAll();
             requests.requestMatchers("/api/login").permitAll();
+            requests.requestMatchers("/api/google-login").permitAll();
             requests.requestMatchers("/api/dashboard/").hasRole("ADMIN");
             //requests.requestMatchers("/**/private/**").denyAll();
             requests.anyRequest().permitAll();

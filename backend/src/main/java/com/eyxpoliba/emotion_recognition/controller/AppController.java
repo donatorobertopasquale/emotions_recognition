@@ -1,5 +1,6 @@
 package com.eyxpoliba.emotion_recognition.controller;
 
+import com.eyxpoliba.emotion_recognition.dto.GoogleLoginRequest;
 import com.eyxpoliba.emotion_recognition.model.UserEntity;
 import com.eyxpoliba.emotion_recognition.payload.ResultPayload;
 import com.eyxpoliba.emotion_recognition.responses.LoginResponse;
@@ -28,6 +29,11 @@ public class AppController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody UserEntity user, jakarta.servlet.http.HttpServletResponse response) {
         return userService.login(user, response);
+    }
+
+    @PostMapping("/google-login")
+    public ResponseEntity<LoginResponse> googleLogin(@RequestBody GoogleLoginRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        return userService.googleLogin(request, response);
     }
 
     @PostMapping("/logout")

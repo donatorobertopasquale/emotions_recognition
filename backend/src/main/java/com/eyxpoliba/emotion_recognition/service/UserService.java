@@ -1,25 +1,32 @@
 package com.eyxpoliba.emotion_recognition.service;
 
+import com.eyxpoliba.emotion_recognition.dto.GoogleLoginRequest;
 import com.eyxpoliba.emotion_recognition.model.BlacklistTokenEntity;
 import com.eyxpoliba.emotion_recognition.model.UserEntity;
 import com.eyxpoliba.emotion_recognition.repository.BlacklistTokenRepository;
 import com.eyxpoliba.emotion_recognition.repository.UserRepository;
 import com.eyxpoliba.emotion_recognition.responses.LoginResponse;
 import com.eyxpoliba.emotion_recognition.security.JwtProvider;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static com.eyxpoliba.emotion_recognition.security.SecurityConstants.ACCESS_TOKEN;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -27,6 +34,7 @@ public class UserService {
     private final BlacklistTokenRepository blacklistTokenRepository;
     private final AzureStorageService azureStorageService;
     private final JwtProvider jwtProvider;
+    private final GoogleTokenVerificationService googleTokenVerificationService;
 
     public ResponseEntity<LoginResponse> login(UserEntity user, HttpServletResponse response) {
         UserEntity newUser = userRepository.save(user);
@@ -48,6 +56,81 @@ public class UserService {
         response.addCookie(jwtRefreshCookie);
 
         return ResponseEntity.created(URI.create("/api/login")).body(new LoginResponse(newUser.getId(), imagesName));
+    }
+
+    public ResponseEntity<LoginResponse> googleLogin(GoogleLoginRequest request, HttpServletResponse response) {
+        try {
+            log.info("Processing Google login request for user with nickname: {}", request.getNickname());
+            
+            // Verify Google JWT token
+            GoogleIdToken.Payload payload = googleTokenVerificationService.verifyToken(request.getGoogleCredential());
+            
+            String googleId = payload.getSubject();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            Boolean emailVerified = payload.getEmailVerified();
+            
+            log.info("Google token verified for user: {} ({})", email, googleId);
+            
+            // Find or create user by Google ID
+            Optional<UserEntity> existingUser = userRepository.findByGoogleId(googleId);
+            UserEntity user;
+            
+            if (existingUser.isPresent()) {
+                // User exists, update their information
+                user = existingUser.get();
+                user.setNickname(request.getNickname());
+                user.setAge(request.getAge());
+                user.setGender(request.getGender());
+                user.setNationality(request.getNationality());
+                user.setEmail(email);
+                user.setEmailVerified(emailVerified);
+                
+                log.info("Updating existing user: {}", user.getId());
+            } else {
+                // Create new user
+                user = new UserEntity();
+                user.setGoogleId(googleId);
+                user.setEmail(email);
+                user.setNickname(request.getNickname());
+                user.setAge(request.getAge());
+                user.setGender(request.getGender());
+                user.setNationality(request.getNationality());
+                user.setEmailVerified(emailVerified);
+                
+                log.info("Creating new user with Google ID: {}", googleId);
+            }
+            
+            // Save user to database
+            UserEntity savedUser = userRepository.save(user);
+            log.info("User saved with ID: {}", savedUser.getId());
+            
+            // Generate JWT tokens for API access
+            HashMap<String, String> tokens = packJwts(savedUser.getNickname(), savedUser.getId());
+            List<String> imagesName = azureStorageService.getRandomBlobNames(10);
+            
+            // Set JWT tokens as cookies
+            Cookie jwtCookie = new Cookie(ACCESS_TOKEN, tokens.get("access_token"));
+            jwtCookie.setPath("/");
+            jwtCookie.setMaxAge(60 * 60); // 1 hour
+            response.addCookie(jwtCookie);
+            
+            Cookie jwtRefreshCookie = new Cookie("refreshToken", tokens.get("refresh_token"));
+            jwtRefreshCookie.setPath("/");
+            jwtRefreshCookie.setMaxAge(120 * 120); // 2 hours
+            response.addCookie(jwtRefreshCookie);
+            
+            log.info("Google login successful for user: {}", savedUser.getNickname());
+            return ResponseEntity.created(URI.create("/api/google-login"))
+                    .body(new LoginResponse(savedUser.getId(), imagesName));
+                    
+        } catch (GeneralSecurityException | IOException e) {
+            log.error("Google token verification failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            log.error("Unexpected error during Google login: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(null);
+        }
     }
 
     public ResponseEntity<Object> logout(HttpServletRequest request, HttpServletResponse response) {

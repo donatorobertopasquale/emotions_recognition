@@ -45,7 +45,8 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             # Log successful authentication
             username = user_info.get("username", "unknown")
             user_id = user_info.get("user_id", "unknown")
-            logger.info(f"Authentication successful for user: {username} (ID: {user_id})")
+            token_type = user_info.get("token_type", "unknown")
+            logger.info(f"Authentication successful for user: {username} (ID: {user_id}, Type: {token_type})")
             
             response = await call_next(request)
             

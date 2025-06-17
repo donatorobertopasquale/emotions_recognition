@@ -4,6 +4,7 @@ fastapi
 python-multipart
 uvicorn[standard]
 PyJWT
+google-auth
 dlib>=19.24.2
 matplotlib==3.8.3
 numpy==1.26.4

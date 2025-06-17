@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        if (request.getRequestURI().contains("public") || path.equals("/api/login")) {
+        if (request.getRequestURI().contains("public") || path.equals("/api/login") || path.equals("/api/google-login")) {
             filterChain.doFilter(request, response);
             return;
         }

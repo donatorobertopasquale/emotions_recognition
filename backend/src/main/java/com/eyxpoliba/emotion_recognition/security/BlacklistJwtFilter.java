@@ -24,7 +24,7 @@ public class BlacklistJwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getRequestURI();
-        if ("/api/login".equals(path)) {
+        if ("/api/login".equals(path) || "/api/google-login".equals(path)) {
             filterChain.doFilter(request, response);
             return;
         }
